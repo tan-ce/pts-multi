@@ -1,0 +1,5 @@
+/jni/x86_bin/*
+/obj/*
+/libs/*
+/update_zip/pts-multicall
+/update_zip/*.zip

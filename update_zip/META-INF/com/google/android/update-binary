@@ -1,0 +1,60 @@
+#!/sbin/sh
+# arg 1 is the recovery API version, generally 3
+# arg 2 is the pipe fd to the recovery binary.
+#       Use it to communicate with the recovery
+#       using the recovery API.
+# arg 3 is the zip file
+
+echo -n -e 'ui_print Installing pts-multi\n' > /proc/self/fd/$2
+echo -n -e 'ui_print\n' > /proc/self/fd/$2
+
+# Extract/copy the files to /cache
+mkdir -p /tmp/pts-multi
+cd /tmp/pts-multi
+unzip -o "$3"
+if [ "$?" -ne "0" ]; then
+    cp /cache/pts-daemon-start .
+    cp /cache/pts-multicall .
+fi
+
+# Mount and remove old pts-multi versions
+mount /system
+mkdir -p /system/xbin
+rm -f /system/xbin/pts-multicall
+rm -f /system/xbin/pts-shell
+rm -f /system/xbin/pts-passwd
+rm -f /system/xbin/pts-daemon
+
+# Copy and create symlinks
+cp pts-multicall /system/xbin/
+chmod 0755 /system/xbin/pts-multicall
+ln -s /system/xbin/pts-multicall /system/xbin/pts-shell
+ln -s /system/xbin/pts-multicall /system/xbin/pts-passwd
+ln -s /system/xbin/pts-multicall /system/xbin/pts-daemon
+
+# Find how how to install the daemon
+# First check: does install_recovery.sh exist?
+if [ -f /system/etc/install-recovery.sh ]; then
+    # Now, does this script look for and run install-recovery-2.sh?
+    TMP=$(cat /system/etc/install-recovery.sh | grep install-recovery-2.sh)
+    if [ -z "$TMP" ]; then
+        # Okay, then we need to append our script to end of install-recovery.sh
+        echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
+        if [ "$?" -ne 0 ]; then
+            # Perhaps it is immutable
+            chattr -i /system/etc/install-recovery.sh
+            echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
+            chattr +i /system/etc/install-recovery.sh
+        fi
+    fi
+
+    cp pts-daemon-start /system/etc/install-recovery-2.sh
+    chmod 0755 /system/etc/install-recovery-2.sh
+else
+    # Ok, then install to install-recovery.sh
+    cp pts-daemon-start /system/etc/install-recovery.sh
+    chmod 0755 /system/etc/install-recovery.sh
+    chattr +i /system/etc/install-recovery.sh
+fi
+
+umount /system

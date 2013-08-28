@@ -1,0 +1,10 @@
+#!/system/bin/sh
+
+if [ "x$PTS_DAEMON_STARTED" = "x" ]; then
+    /system/xbin/pts-daemon -D
+
+    PTS_DAEMON_STARTED=1
+    export PTS_DAEMON_STARTED
+
+    /system/etc/install-recovery-2.sh
+fi
