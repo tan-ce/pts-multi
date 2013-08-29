@@ -43,10 +43,10 @@ int init_signals(void) {
     act.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &act, NULL);
 
-	// Automatically reap children zombies
-	act.sa_handler = SIG_IGN;
-	act.sa_flags = SA_NOCLDWAIT;
-	sigaction(SIGCHLD, &act, NULL);
+    // Automatically reap children zombies
+    act.sa_handler = SIG_IGN;
+    act.sa_flags = SA_NOCLDWAIT;
+    sigaction(SIGCHLD, &act, NULL);
 
     return 0;
 }
@@ -58,7 +58,7 @@ void signals_default(void) {
     act.sa_handler = SIG_DFL;
 
     sigaction(SIGPIPE, &act, NULL);
-	sigaction(SIGCHLD, &act, NULL);
+    sigaction(SIGCHLD, &act, NULL);
 }
 
 // Creates the control socket
@@ -82,7 +82,7 @@ int init_socket(const char *sock_path) {
     // Remove if anything is already where the socket should be
     unlink(sck_addr.sun_path);
 
-	printf("Attempting to bind to %s\n", sck_addr.sun_path);
+    printf("Attempting to bind to %s\n", sck_addr.sun_path);
 
     // Bind
     if (bind(sck, (struct sockaddr *) &sck_addr, sizeof(sck_addr)) < 0) {
@@ -185,40 +185,40 @@ static void service_exec(FILE *fp, char *arg) {
 // Handles a single connection. Will fork and close the FD
 // in the parent
 void service_main(int sck) {
-	pid_t pid;
-	int authed;
-	FILE *fp;
-	char buf[128];
+    pid_t pid;
+    int authed;
+    FILE *fp;
+    char buf[128];
 
-	pid = fork();
-	if (pid < 0) {
-		perror("service_handler(): Could not fork");
-		return;
-	} else if (pid > 0) {
-		// In parent
-		close(sck);
-		return;
-	}
+    pid = fork();
+    if (pid < 0) {
+        perror("service_handler(): Could not fork");
+        return;
+    } else if (pid > 0) {
+        // In parent
+        close(sck);
+        return;
+    }
 
-	// In child
-	authed = 0;
-	pid = getpid();
+    // In child
+    authed = 0;
+    pid = getpid();
 
-	// Turn our socket operations into buffered I/O
-	fp = fdopen(sck, "w+");
-	if (!fp) {
-		perror("fdopen failed");
-		close(sck);
-		exit(EXIT_FAILURE);
-	}
+    // Turn our socket operations into buffered I/O
+    fp = fdopen(sck, "w+");
+    if (!fp) {
+        perror("fdopen failed");
+        close(sck);
+        exit(EXIT_FAILURE);
+    }
 
-	// Service loop
-	printf("[%d] Starting service loop\n", pid);
-	while(1) {
-		char *line = fgets(buf, 128, fp);
+    // Service loop
+    printf("[%d] Starting service loop\n", pid);
+    while(1) {
+        char *line = fgets(buf, 128, fp);
         char *cmd, *arg;
 
-		if (!line) break;
+        if (!line) break;
 
         // Parse the command
         cmd = strtok(line, " ");
@@ -241,26 +241,26 @@ void service_main(int sck) {
         } else {
             fprintf(fp, "0 Bad command\n");
         }
-	}
+    }
 
-	fclose(fp);
-	printf("[%d] Child exited\n", pid);
-	exit(EXIT_SUCCESS);
+    fclose(fp);
+    printf("[%d] Child exited\n", pid);
+    exit(EXIT_SUCCESS);
 }
 
 // Daemon entry point
 int pts_daemon_main(int argc, char *argv[]) {
     int sck;
-	struct pollfd pfd;
+    struct pollfd pfd;
     
     if (argc > 1 && (strcmp(argv[1], "-D") == 0)) {
         daemonize();
     }
 
-	if (check_path(PATH_PREFIX)) return -1;	
+    if (check_path(PATH_PREFIX)) return -1; 
 
-	// Initialization
-	printf("Initializing daemon\n");
+    // Initialization
+    printf("Initializing daemon\n");
     if (init_signals()) return -1;
 
     sck = init_socket(PATH_PREFIX "/pts");
@@ -268,36 +268,36 @@ int pts_daemon_main(int argc, char *argv[]) {
         return -1;
     }
 
-	// Main server loop
-	pfd.fd = sck;
-	pfd.events = POLLIN;
+    // Main server loop
+    pfd.fd = sck;
+    pfd.events = POLLIN;
 
-	printf("Entering main loop\n");
-	listen(sck, 2);
+    printf("Entering main loop\n");
+    listen(sck, 2);
 
-	while(1) {
-		int ret;
+    while(1) {
+        int ret;
 
-		// Poll for incoming connections
-		pfd.revents = 0;
-		ret = poll(&pfd, 1, -1);
-		if (ret < 0) {
-			perror("poll() failed in main loop");
-			return -1;
-		}
+        // Poll for incoming connections
+        pfd.revents = 0;
+        ret = poll(&pfd, 1, -1);
+        if (ret < 0) {
+            perror("poll() failed in main loop");
+            return -1;
+        }
 
-		if (pfd.revents & POLLIN) {
-			int chd_sck;
-			// Incoming connection
-			chd_sck = accept(sck, NULL, NULL);
-			if (chd_sck < 0) {
-				perror("accept() failed in main loop");
-				return -1;
-			}
+        if (pfd.revents & POLLIN) {
+            int chd_sck;
+            // Incoming connection
+            chd_sck = accept(sck, NULL, NULL);
+            if (chd_sck < 0) {
+                perror("accept() failed in main loop");
+                return -1;
+            }
 
-			service_main(chd_sck);
-		}
-	}
+            service_main(chd_sck);
+        }
+    }
 
     return 0;
 }

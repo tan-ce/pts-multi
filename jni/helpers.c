@@ -117,8 +117,8 @@ int passwd_init_terminal(void) {
     new_tty = original_tty;
 
     // Turn off echo
-	new_tty.c_lflag &= ~ECHO;
-	new_tty.c_lflag |= ECHONL;
+    new_tty.c_lflag &= ~ECHO;
+    new_tty.c_lflag |= ECHONL;
 
     if (tcsetattr(STDIN_FILENO, TCSANOW, &new_tty) < 0) {
         perror("Failed to set TTY");
@@ -210,25 +210,25 @@ FILE *get_file(const char *path, char *buf, size_t *buf_size) {
 // Checks whether the path exists.
 // If not, attempt to create it.
 int check_path(const char *path) {
-	DIR *dir;
+    DIR *dir;
 
-	dir = opendir(path);
+    dir = opendir(path);
 
-	if (dir) {
-		// Directory exists. Nothing else to do
-		closedir(dir);
-		return 0;
-	} else if (errno == ENOENT) {
-		if (mkdir(path, 0755) < 0) {
-			perror("Unable to create working directory");
-			return -1;
-		} else {
-			return 0;
-		}
-	} else {
-		perror("Cannot access working directory");
-		return -1;
-	}
+    if (dir) {
+        // Directory exists. Nothing else to do
+        closedir(dir);
+        return 0;
+    } else if (errno == ENOENT) {
+        if (mkdir(path, 0755) < 0) {
+            perror("Unable to create working directory");
+            return -1;
+        } else {
+            return 0;
+        }
+    } else {
+        perror("Cannot access working directory");
+        return -1;
+    }
 }
 
 // Daemonizes the process

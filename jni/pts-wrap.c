@@ -156,11 +156,11 @@ static int init_terminal(void) {
 
     // Make the terminal like an SSH or telnet client
     new_tty.c_iflag |= IGNPAR;
-	new_tty.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
-	new_tty.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
-	new_tty.c_oflag &= ~OPOST;
-	new_tty.c_cc[VMIN] = 1;
-	new_tty.c_cc[VTIME] = 0;
+    new_tty.c_iflag &= ~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXANY | IXOFF);
+    new_tty.c_lflag &= ~(ISIG | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
+    new_tty.c_oflag &= ~OPOST;
+    new_tty.c_cc[VMIN] = 1;
+    new_tty.c_cc[VTIME] = 0;
 
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &new_tty) < 0) {
         perror("Failed to set TTY");
