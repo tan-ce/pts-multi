@@ -207,19 +207,34 @@ FILE *get_file(const char *path, char *buf, size_t *buf_size) {
     return ret;
 }
 
-// Checks whether the path exists.
+// Checks whether the app working path exists.
 // If not, attempt to create it.
 int check_path(const char *path) {
     DIR *dir;
+    mode_t old_umask;
+    int ret;
 
     dir = opendir(path);
 
     if (dir) {
-        // Directory exists. Nothing else to do
+        // Directory exists
         closedir(dir);
+        // Ensure it has the right permissions
+        if (chmod(path, 0701) < 0) {
+            perror("Warning: Unable to set working directory mode");
+        }
         return 0;
     } else if (errno == ENOENT) {
-        if (mkdir(path, 0755) < 0) {
+
+        // We need that execute bit on others, otherwise
+        // the socket won't be accesible to others
+        old_umask = umask(0);
+        // Try to create the directory
+        ret = mkdir(path, 0701);
+        // Restore the old umask
+        umask(old_umask);
+
+        if (ret < 0) {
             perror("Unable to create working directory");
             return -1;
         } else {
