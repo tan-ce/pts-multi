@@ -31,9 +31,21 @@ chmod 0755 /system/xbin/pts-multicall
 ln -s /system/xbin/pts-multicall /system/xbin/pts-shell
 ln -s /system/xbin/pts-multicall /system/xbin/pts-passwd
 ln -s /system/xbin/pts-multicall /system/xbin/pts-daemon
+ln -s /system/xbin/pts-multicall /system/xbin/pts-wrap
+ln -s /system/xbin/pts-multicall /system/xbin/pts-exec
 
 # Find how how to install the daemon
+
 # First check: does install_recovery.sh exist?
+if [ -f /system/etc/install-recovery.sh ]; then
+    # Is this our own script?
+    TMP=$(cat /system/etc/install-recovery.sh | grep pts-daemon)
+    if [ ! -z "$TMP" ]; then
+        # Delete it so we'll install a new one
+        rm /system/etc/install-recovery.sh
+    fi
+fi
+
 if [ -f /system/etc/install-recovery.sh ]; then
     # Now, does this script look for and run install-recovery-2.sh?
     TMP=$(cat /system/etc/install-recovery.sh | grep install-recovery-2.sh)
