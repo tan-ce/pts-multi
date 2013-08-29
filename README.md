@@ -33,7 +33,7 @@ After that, you may execute
 pts-shell <path to application>
 ```
 
-At any time to request the daemon to launch the given application.
+At any time to request the daemon to launch the given application. Note that pts-shell does NOT need (and, in fact, should not) be run from a root shell.
 
 ## pts-exec and pts-wrap
 (a.k.a. non-daemon usage)
