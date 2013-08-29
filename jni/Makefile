@@ -6,8 +6,9 @@ X86_PATH=x86_bin
 X86_BIN=$(X86_PATH)/$(APP)
 SRC=main.c pts-exec.c pts-wrap.c pts-daemon.c bcrypt.c \
 	blowfish.c helpers.c pts-passwd.c pts-shell.c
+UPDATE_ZIP=pts-multi_$(shell date +%Y%m%e)_tan-ce.zip
 
-all : $(BIN) $(X86_BIN)
+all : $(BIN) $(X86_BIN) zip
 	@echo -e "\\n--- x86 and Android build complete ---"
 
 x86 : $(X86_BIN)
@@ -28,6 +29,13 @@ clean:
 	-rm -rf ../libs/*
 	-rm -rf x86_bin/$(APP)
 	-rm -f ../update_zip/$(APP)
+
+zip : ../$(UPDATE_ZIP)
+
+../$(UPDATE_ZIP): force-look
+	@echo -e "\\n--- Starting update zip creation ---"
+	-rm -f $@
+	(cd ../update_zip; zip ../$(UPDATE_ZIP) `find -type f`)
 
 force-look:
 	@true
