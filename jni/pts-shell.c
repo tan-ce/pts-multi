@@ -140,7 +140,7 @@ static void request_exec(FILE *fp, char *pts_name, char *argv[]) {
 }
 
 int pts_shell_main(int argc, char *argv[]) {
-    char buf[256];
+    char buf[256], *buf2;
     int sck, i, pts_fd;
     FILE *fp;
 
@@ -158,7 +158,7 @@ int pts_shell_main(int argc, char *argv[]) {
     printf("\n");
 
     // Connect!
-    sck = unix_socket_connect(PATH_PREFIX "/pts");
+    sck = unix_socket_connect("/dev/pts-daemon");
     if (sck == -1) return -1;
 
     fp = fdopen(sck, "w+");
@@ -168,15 +168,22 @@ int pts_shell_main(int argc, char *argv[]) {
         return -1;
     }
 
-    // Get the user's password
-    passwd_init_terminal();
-    printf("(pts-shell) Enter your password: ");
-    if (fgets(buf, sizeof(buf), stdin) == NULL) return -1;
-    passwd_deinit_terminal();
-    terminate_buf(buf, sizeof(buf));
+    // See if the password is specified on the command line
+    buf2 = getenv("PTS_AUTH");
+    if (buf2) {
+        // User supplied password in the environment
+        authenticate(fp, buf2);
+    } else {
+        // Get the user's password
+        passwd_init_terminal();
+        printf("(pts-shell) Enter your password: ");
+        if (fgets(buf, sizeof(buf), stdin) == NULL) return -1;
+        passwd_deinit_terminal();
+        terminate_buf(buf, sizeof(buf));
 
-    authenticate(fp, buf);
-    memset(buf, '\0', sizeof(buf));
+        authenticate(fp, buf);
+        memset(buf, '\0', sizeof(buf));
+    }
 
     // Open a new PTS device
     pts_fd = pts_open(buf, 256);

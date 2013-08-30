@@ -263,7 +263,7 @@ int pts_daemon_main(int argc, char *argv[]) {
     printf("Initializing daemon\n");
     if (init_signals()) return -1;
 
-    sck = init_socket(PATH_PREFIX "/pts");
+    sck = init_socket("/dev/pts-daemon");
     if (sck < 0) {
         return -1;
     }

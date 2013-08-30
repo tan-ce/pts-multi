@@ -33,14 +33,21 @@ After that, you may execute
 pts-shell <path to application>
 ```
 
-At any time to request the daemon to launch the given application. Note that pts-shell does NOT need (and, in fact, should not) be run from a root shell.
+At any time to request the daemon to launch the given application. Note that pts-shell does NOT need (and, in fact, should not) be run from a root shell. Before launching the application as root, pts-shell will ask for the password as set by pts-passwd. To prevent this password prompting, you can supply this password in the environment variable `PTS_AUTH`. For example, a script could do the following:
+
+```
+export PTS_AUTH="abcxyz"
+pts-shell /system/bin/sh
+```
+
+and pts-shell will not prompt for a password.
 
 ## pts-exec and pts-wrap
 (a.k.a. non-daemon usage)
 
 In a regular terminal, run `pts-wrap`. Observe the name of the pseudo-terminal which was created. (eg. /dev/pts/2)
 
-Run `pts-exec` as root as follows:
+Run `pts-exec` as root like so:
 
 ```
 pts-exec <pseudo-terminal name> <path to application>
