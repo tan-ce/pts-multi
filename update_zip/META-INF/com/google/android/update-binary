@@ -14,6 +14,7 @@ cd /tmp/pts-multi
 unzip -o "$3"
 if [ "$?" -ne "0" ]; then
     cp /cache/pts-daemon-start .
+    cp /cache/50pts-daemon-start .
     cp /cache/pts-multicall .
 fi
 
@@ -24,6 +25,8 @@ rm -f /system/xbin/pts-multicall
 rm -f /system/xbin/pts-shell
 rm -f /system/xbin/pts-passwd
 rm -f /system/xbin/pts-daemon
+rm -f /system/xbin/pts-wrap
+rm -f /system/xbin/pts-exec
 
 # Copy and create symlinks
 cp pts-multicall /system/xbin/
@@ -36,7 +39,7 @@ ln -s /system/xbin/pts-multicall /system/xbin/pts-exec
 
 # Find how how to install the daemon
 
-# First check: does install_recovery.sh exist?
+# Does install_recovery.sh exist?
 if [ -f /system/etc/install-recovery.sh ]; then
     # Is this our own script?
     TMP=$(cat /system/etc/install-recovery.sh | grep pts-daemon)
@@ -46,27 +49,40 @@ if [ -f /system/etc/install-recovery.sh ]; then
     fi
 fi
 
-if [ -f /system/etc/install-recovery.sh ]; then
-    # Now, does this script look for and run install-recovery-2.sh?
-    TMP=$(cat /system/etc/install-recovery.sh | grep install-recovery-2.sh)
-    if [ -z "$TMP" ]; then
-        # Okay, then we need to append our script to end of install-recovery.sh
-        echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
-        if [ "$?" -ne 0 ]; then
-            # Perhaps it is immutable
-            chattr -i /system/etc/install-recovery.sh
-            echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
-            chattr +i /system/etc/install-recovery.sh
-        fi
+# Do our best to install the appropriate startup script
+if [ -d /system/etc/init.d ]; then
+    # Most likely init.d startup 
+    if [ -f /system/etc/init.d/50pts-daemon-start ]; then
+        chattr -i /system/etc/init.d/50pts-daemon-start
+        rm /system/etc/init.d/50pts-daemon-start
     fi
 
-    cp pts-daemon-start /system/etc/install-recovery-2.sh
-    chmod 0755 /system/etc/install-recovery-2.sh
+    cp 50pts-daemon-start /system/etc/init.d
+    chmod 0755 /system/etc/init.d/50pts-daemon-start
+    chattr +i /system/etc/init.d/50pts-daemon-start
 else
-    # Ok, then install to install-recovery.sh
-    cp pts-daemon-start /system/etc/install-recovery.sh
-    chmod 0755 /system/etc/install-recovery.sh
-    chattr +i /system/etc/install-recovery.sh
+    if [ -f /system/etc/install-recovery.sh ]; then
+        # Now, does this script look for and run install-recovery-2.sh?
+        TMP=$(cat /system/etc/install-recovery.sh | grep install-recovery-2.sh)
+        if [ -z "$TMP" ]; then
+            # Okay, then we need to append our script to end of install-recovery.sh
+            echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
+            if [ "$?" -ne 0 ]; then
+                # Perhaps it is immutable
+                chattr -i /system/etc/install-recovery.sh
+                echo '/system/etc/install-recovery-2.sh' >> /system/etc/install-recovery.sh
+                chattr +i /system/etc/install-recovery.sh
+            fi
+        fi
+
+        cp pts-daemon-start /system/etc/install-recovery-2.sh
+        chmod 0755 /system/etc/install-recovery-2.sh
+    else
+        # Ok, then install to install-recovery.sh
+        cp pts-daemon-start /system/etc/install-recovery.sh
+        chmod 0755 /system/etc/install-recovery.sh
+        chattr +i /system/etc/install-recovery.sh
+    fi
 fi
 
 umount /system

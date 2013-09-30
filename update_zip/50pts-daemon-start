@@ -1,0 +1,3 @@
+#!/system/bin/sh
+
+/system/xbin/pts-daemon -D
