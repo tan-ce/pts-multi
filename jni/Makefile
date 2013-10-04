@@ -6,7 +6,7 @@ X86_PATH=x86_bin
 X86_BIN=$(X86_PATH)/$(APP)
 SRC=main.c pts-exec.c pts-wrap.c pts-daemon.c bcrypt.c \
 	blowfish.c helpers.c pts-passwd.c pts-shell.c
-UPDATE_ZIP=pts-multi_$(shell date +%Y%m%e)_tan-ce.zip
+UPDATE_ZIP=pts-multi_$(shell date +%Y%m%d)_tan-ce.zip
 
 all : $(BIN) $(X86_BIN) zip
 	@echo -e "\\n--- x86 and Android build complete ---"
