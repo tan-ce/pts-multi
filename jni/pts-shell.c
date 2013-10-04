@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <linux/limits.h>
 
 #include "helpers.h"
 #include "bcrypt.h"
@@ -183,6 +184,24 @@ int pts_shell_main(int argc, char *argv[]) {
 
         authenticate(fp, buf);
         memset(buf, '\0', sizeof(buf));
+    }
+
+    // Send the daemon our current directory
+    buf2 = malloc(PATH_MAX);
+    if (getcwd(buf2, PATH_MAX)) {
+        fprintf(fp, "cd %s\n", buf2);
+        free(buf2);
+
+        i = parse_server_response(fp, &buf2);
+        if (i == -1) {
+            fprintf(stderr, "Server returned unexpected response\n");
+            exit(-1);
+        } else if (i == 0) {
+            fprintf(stderr, "Warning: Unable to change directory: %s\n", buf2);
+        }
+    } else {
+        free(buf2);
+        fprintf(stderr, "Warning: Could not get current working directory\n");
     }
 
     // Open a new PTS device

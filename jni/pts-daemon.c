@@ -232,14 +232,30 @@ void service_main(int sck) {
                 fprintf(fp, "0 Auth failed\n");
             }
 
-        } else if (strcmp(cmd, "exec") == 0) {
-            if (authed) {
-                service_exec(fp, arg);
-            } else {
-                fprintf(fp, "0 Not authorized\n");
-            }
+            continue;
+        }
+
+        if (!authed) {
+            // Don't entertain anything else if not authorized
+            fprintf(fp, "0 Not authorized\n");
         } else {
-            fprintf(fp, "0 Bad command\n");
+            // Change Directory
+            if (strcmp(cmd, "cd") == 0) {
+                if (chdir(arg) == 0) {
+                    fprintf(fp, "1 Change directory OK\n");
+                } else {
+                    fprintf(fp, "0 Change directory failed\n");
+                }
+
+            // EXEC
+            } else if (strcmp(cmd, "exec") == 0) {
+                service_exec(fp, arg);
+
+            // Unknown command
+            } else {
+                fprintf(fp, "0 Bad command\n");
+
+            }
         }
     }
 
