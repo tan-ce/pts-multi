@@ -1,4 +1,4 @@
-NDK_PATH=/opt/android-ndk-r9
+NDK_PATH=/opt/android-ndk-r10c
 
 APP=pts-multicall
 BIN=../libs/armeabi/$(APP)
