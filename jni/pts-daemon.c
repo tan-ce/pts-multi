@@ -174,6 +174,7 @@ static void service_exec(FILE *fp, char *arg) {
     }
     
     // In child
+    fclose(fp);
     signals_default();
 
     // Exec!
