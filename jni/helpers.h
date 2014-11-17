@@ -30,6 +30,19 @@
 
 extern struct termios original_tty, raw_tty;
 
+#ifdef _X86
+#   define LOGE(...) printf("\nE: " __VA_ARGS__)
+#   define LOGW(...) printf("\nW: " __VA_ARGS__)
+#   define LOGD(...) printf("\nD: " __VA_ARGS__)
+#else
+#   include <android/log.h>
+void exec_log(int priority, const char *fmt, ...);
+#   define LOG_TAG  "pts-multi"
+#   define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#   define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
+#   define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#endif
+
 // Verifies a user's password
 // Returns 0 on successful authentication
 int verify_password(const char *prompt, char *hash);

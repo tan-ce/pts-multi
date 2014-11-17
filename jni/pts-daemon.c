@@ -72,11 +72,11 @@ int init_socket(void) {
     sck = socket(AF_INET, SOCK_STREAM, 0);
     i = 1;
     if (sck == -1) {
-        perror("Failed to open socket");
+        LOGE("Failed to open socket: %s", strerror(errno));
         return -1;
     }
     if (setsockopt(sck, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) == -1) {
-        perror("Failed to set socket options");
+        LOGE("Failed to set socket options: %s", strerror(errno));
         return -1;
     }
 
@@ -86,10 +86,10 @@ int init_socket(void) {
     addr.sin_addr.s_addr = inet_addr(DAEMON_ADDR);
     addr.sin_port = htons(DAEMON_PORT);
 
-    printf("Attempting to bind to %s:%d\n", DAEMON_ADDR, DAEMON_PORT);
+    LOGD("Attempting to bind to %s:%d\n", DAEMON_ADDR, DAEMON_PORT);
 
     if (bind(sck, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
-        perror("Failed to bind socket");
+        LOGE("Failed to bind socket: %s", strerror(errno));
         return -1;
     }
 
@@ -267,18 +267,23 @@ int pts_daemon_main(int argc, char *argv[]) {
     int sck;
     struct pollfd pfd;
     
+    LOGD("Starting pts-daemon");
+    printf("Starting pts-daemon\n");
     if (argc > 1 && (strcmp(argv[1], "-D") == 0)) {
+        LOGD("Daemonizing");
         daemonize();
     }
 
     if (check_path(PATH_PREFIX)) return -1; 
 
     // Initialization
-    printf("Initializing daemon\n");
+    LOGD("init_signals()");
     if (init_signals()) return -1;
 
+    LOGD("init_socket()");
     sck = init_socket();
     if (sck < 0) {
+        LOGE("Terminating due to errors in init_socket()");
         return -1;
     }
 
@@ -286,7 +291,7 @@ int pts_daemon_main(int argc, char *argv[]) {
     pfd.fd = sck;
     pfd.events = POLLIN;
 
-    printf("Entering main loop\n");
+    LOGD("Entering main loop");
     listen(sck, 2);
 
     while(1) {
