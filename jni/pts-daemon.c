@@ -26,7 +26,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "helpers.h"
 #include "bcrypt.h"
@@ -63,37 +64,33 @@ void signals_default(void) {
 
 // Creates the control socket
 // Returns the socket FD on success, or -1 on failure
-int init_socket(const char *sock_path) {
-    int sck;
-    struct sockaddr_un sck_addr;
+int init_socket(void) {
+    int sck, i;
+    struct sockaddr_in addr;
 
-    // Create the socket
-    sck = socket(AF_UNIX, SOCK_STREAM, 0);
+    // Create a socket
+    sck = socket(AF_INET, SOCK_STREAM, 0);
+    i = 1;
     if (sck == -1) {
         perror("Failed to open socket");
         return -1;
     }
-
-    // Set the path
-    sck_addr.sun_family = AF_UNIX;
-    strncpy(sck_addr.sun_path, sock_path, sizeof(sck_addr.sun_path));
-    sck_addr.sun_path[sizeof(sck_addr.sun_path) - 1] = '\0';
-
-    // Remove if anything is already where the socket should be
-    unlink(sck_addr.sun_path);
-
-    printf("Attempting to bind to %s\n", sck_addr.sun_path);
-
-    // Bind
-    if (bind(sck, (struct sockaddr *) &sck_addr, sizeof(sck_addr)) < 0) {
-        perror("Failed to bind socket");
+    if (setsockopt(sck, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) == -1) {
+        perror("Failed to set socket options");
         return -1;
     }
 
-    // Attempt to set socket permissions
-    if (chmod(sck_addr.sun_path, S_IRUSR | S_IRGRP | S_IROTH | 
-                    S_IWUSR | S_IWGRP | S_IWOTH) < 0) {
-        perror("Warning: unable to set sock permissions");
+    // Bind to localhost
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(DAEMON_ADDR);
+    addr.sin_port = htons(DAEMON_PORT);
+
+    printf("Attempting to bind to %s:%d\n", DAEMON_ADDR, DAEMON_PORT);
+
+    if (bind(sck, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+        perror("Failed to bind socket");
+        return -1;
     }
 
     return sck;
@@ -280,7 +277,7 @@ int pts_daemon_main(int argc, char *argv[]) {
     printf("Initializing daemon\n");
     if (init_signals()) return -1;
 
-    sck = init_socket("/dev/pts-daemon");
+    sck = init_socket();
     if (sck < 0) {
         return -1;
     }

@@ -25,6 +25,8 @@
 #include <termios.h>
 
 #define PATH_PREFIX    "/data/pts"
+#define DAEMON_ADDR    "127.0.0.1"
+#define DAEMON_PORT    992
 
 extern struct termios original_tty, raw_tty;
 

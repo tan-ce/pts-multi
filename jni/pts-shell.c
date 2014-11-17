@@ -21,7 +21,8 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <linux/limits.h>
 
 #include "helpers.h"
@@ -29,29 +30,31 @@
 
 int pts_wrap(int pts_fd);
 
-// Connects to a unix socket. On success a FD is returned.
+// Connects to the daemon. On success an FD is returned.
 // Otherwise -1 is returned.
-static int unix_socket_connect(const char *path) {
-    struct sockaddr_un addr;
-    int fd;
+static int socket_connect(void) {
+    int sck;
+    struct sockaddr_in addr;
 
-    fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd == -1) {
+    // Create a socket
+    sck = socket(AF_INET, SOCK_STREAM, 0);
+    if (sck == -1) {
         perror("Could not create socket");
         return -1;
     }
 
-    memset(&addr, '\0', sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
+    // Connect to the daemon
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(DAEMON_ADDR);
+    addr.sin_port = htons(DAEMON_PORT);
 
-    if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
+    if (connect(sck, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
         perror("Could not connect to socket");
-        close(fd);
         return -1;
     }
 
-    return fd;
+    return sck;
 }
 
 // Server responses are only 1 (success), 0 (failure)
@@ -159,7 +162,7 @@ int pts_shell_main(int argc, char *argv[]) {
     printf("\n");
 
     // Connect!
-    sck = unix_socket_connect("/dev/pts-daemon");
+    sck = socket_connect();
     if (sck == -1) return -1;
 
     fp = fdopen(sck, "w+");
